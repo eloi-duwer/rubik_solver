@@ -1,17 +1,17 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   main.h                                             :+:      :+:    :+:   */
+/*   rubik.h                                            :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: eduwer <eduwer@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/09/06 16:46:51 by eduwer            #+#    #+#             */
-/*   Updated: 2020/09/12 00:09:02 by eduwer           ###   ########.fr       */
+/*   Updated: 2020/09/14 00:30:08 by eduwer           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef __MAIN_H__
-# define __MAIN_H__
+#ifndef __RUBIK_H__
+# define __RUBIK_H__
 
 # include <stdint.h>
 # include <stdlib.h>
@@ -60,12 +60,15 @@ typedef struct	s_cube {
 	uint8_t		corner_orientation[8];
 	uint8_t		edge_orientation[12];
 
-} 				t_cube;
+}				t_cube;
 
-void print_cube(t_cube *cube);
-t_cube *create_base_cube();
-t_cube *rotation_cube(t_cube *cube, int move, bool free_old_cube);
+void	print_cube(t_cube *cube);
+t_cube	*create_base_cube();
+t_cube	*rotation_cube(t_cube *cube, int move, bool free_old_cube);
 t_cube	*duplicate_cube(const t_cube *in);
-uint8_t get_next_pos(int move, int step);
+uint8_t	get_next_pos(int move, int step);
+char	**ft_strsplit(char const *s, char c);
+int		str_to_move(char *str);
+char	*move_to_str(int move);
 
 #endif

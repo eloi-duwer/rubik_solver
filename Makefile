@@ -1,10 +1,12 @@
-SRC_NAME = main.c
+SRC_NAME = main.c \
+	strsplit.c \
+	conv.c
 
 NAME = rubik
 
 CC = gcc
 
-CFLAGS = -Wall -Wextra -I./header -g -Wno-unused-parameter -Wno-unused-variable -Wno-unused-but-set-variable -O3
+CFLAGS = -Wall -Wextra -I./header -g -O3
 
 SRCF = ./src/
 
