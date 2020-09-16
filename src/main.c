@@ -6,7 +6,7 @@
 /*   By: eduwer <eduwer@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/09/06 16:46:02 by eduwer            #+#    #+#             */
-/*   Updated: 2020/09/14 00:30:34 by eduwer           ###   ########.fr       */
+/*   Updated: 2020/09/16 23:58:04 by eduwer           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,11 +23,11 @@
  */
 const uint8_t cube_moves[6][8] = {
 	{0, 1, 2, 3, 0, 1, 2, 3}, //UP
-	{4, 7, 6, 5, 8, 11, 10, 9}, //DOWN
-	{0, 4, 5, 1, 1, 4, 9, 5}, //LEFT
-	{2, 6, 7, 3, 3, 6, 11, 7}, //RIGHT
-	{0, 3, 7, 4, 0, 7, 8, 4}, //FRONT
-	{1, 5, 6, 2, 2, 5, 10, 6} //BACK
+	{5, 4, 7, 6, 8, 11, 10, 9}, //DOWN
+	{0, 5, 6, 1, 1, 4, 9, 5}, //LEFT
+	{2, 7, 4, 3, 3, 6, 11, 7}, //RIGHT
+	{0, 3, 4, 5, 0, 7, 8, 4}, //FRONT
+	{1, 6, 7, 2, 2, 5, 10, 6} //BACK
 };
 
 uint8_t get_next_pos(int move, int step) {
@@ -94,18 +94,18 @@ t_cube *rotation_cube(t_cube *cube, int move, bool free_old_cube) {
 		*/
 		next_pos = (i + (move % 3) + 1) % 4;
 		ret->corner_pos[cubes[next_pos]] = cube->corner_pos[cubes[i]];
-		//(move >= 6 && move % 3 != 1) * (1 + (i % 2)): Same stuff than the one for edge orientation, but more complicated
-		//UP or DOWN don't change the orientation, Double neither. So the part before the * evaluates to 0 if the corner orientation doesn't change
+		//((move < M_L || move > M_RP) && move % 3 != 1) * (1 + (i % 2)): Same stuff than the one for edge orientation, but more complicated
+		//LEFT or RIGHT don't change the orientation, half turn neither. So the part before the * evaluates to 0 if the corner orientation doesn't change
 		//The part after evaluates to 1 or 2 in function of the number of the step, 2 out of 4 cubes are rotated ccw, and the other cw
 		ret->corner_orientation[cubes[next_pos]] = \
 			(cube->corner_orientation[cubes[i]] \
-			+ ((move >= 6 && move % 3 != 1) * (1 + (i % 2)))) % 3;
+			+ (((move < M_L || move > M_RP) && move % 3 != 1) * (1 + (i % 2)))) % 3;
 		ret->edge_pos[cubes[next_pos + 4]] = cube->edge_pos[cubes[i + 4]];
-		//(move < 6 && move % 3 != 1): move is UP or DOWN and move is not a half turn (M_U2, M_D2)
+		//(move < M_L && move % 3 != 1): move is UP or DOWN and move is not a half turn (M_U2, M_D2)
 		//it adds one to the orientation if it is the case, with % 2 it effectively swaps the orientation if the condition evaluates to true
 		ret->edge_orientation[cubes[next_pos + 4]] = \
 			(cube->edge_orientation[cubes[i + 4]] \
-				+ (move < 6 && move % 3 != 1)) % 2;
+				+ (move < M_L && move % 3 != 1)) % 2;
 		++i;
 	}
 	if (free_old_cube)

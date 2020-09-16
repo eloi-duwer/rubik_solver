@@ -6,7 +6,7 @@
 /*   By: eduwer <eduwer@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/09/06 16:46:51 by eduwer            #+#    #+#             */
-/*   Updated: 2020/09/14 00:30:08 by eduwer           ###   ########.fr       */
+/*   Updated: 2020/09/14 23:47:50 by eduwer           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -50,8 +50,8 @@
  * good = the piece can be brought back to it's position / orientation
  * without using up or down move,
  * so each up and down moves flip the edge orientation
- * Corner orientation: 0 if the U or D corner facelet is
- * on the U or D side of the Cube, 2 or 1 if the corner
+ * Corner orientation: 0 if the L or R corner facelet is
+ * on the L or R side of the Cube, 2 or 1 if the corner
  * needs to be rotated cw or ccw respectivley
  */
 typedef struct	s_cube {
