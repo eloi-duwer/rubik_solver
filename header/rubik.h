@@ -18,38 +18,14 @@
 # include <stdio.h>
 # include <string.h>
 # include <stdbool.h>
-
-# define M_U 0
-# define M_U2 1
-# define M_UP 2
-
-# define M_D 3
-# define M_D2 4
-# define M_DP 5
-
-# define M_L 6
-# define M_L2 7
-# define M_LP 8
-
-# define M_R 9
-# define M_R2 10
-# define M_RP 11
-
-# define M_F 12
-# define M_F2 13
-# define M_FP 14
-
-# define M_B 15
-# define M_B2 16
-# define M_BP 17
+# include <pieces_positions_movements.h>
 
 /*
- * Corner pos order: UFL, UBL, UBR, UFR, DFL, DBL, DBR, DFR
- * Edge pos order: UF, UL, UB, UR, FL, BL, BR, FR, DF, DL, DB, DR
+ * corner pos: see pieces_positions_movements.h
  * Edge orientation: 0 if good, 1 if bad.
  * good = the piece can be brought back to it's position / orientation
  * without using up or down move,
- * so each up and down moves flip the edge orientation
+ * so each up and down moves flip the edge orientation (u2/d2 does nothing)
  * Corner orientation: 0 if the L or R corner facelet is
  * on the L or R side of the Cube, 2 or 1 if the corner
  * needs to be rotated cw or ccw respectivley

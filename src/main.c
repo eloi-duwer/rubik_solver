@@ -16,18 +16,16 @@
  * Represents the pieces affected and order when doing a cw rotation on a face
  * for each face, the 4 first numbers are the corner,
  * and the 4 last are the edges
- * Explanation for Down move for exxample:
- * Corner 4 goes to 7, 7 goes to 6, 6 goes to 5, 5 goes to 4. Same for the edges
- * Corner order: UFL, UBL, UBR, UFR, DFL, DBL, DBR, DFR
- * Edge order: UF, UL, UB, UR, FL, BL, BR, FR, DF, DL, DB, DR
+ * the first on the line goes to the second, second to third... the last one
+ * loops back to the beginning
  */
 const uint8_t cube_moves[6][8] = {
-	{0, 1, 2, 3, 0, 1, 2, 3}, //UP
-	{5, 4, 7, 6, 8, 11, 10, 9}, //DOWN
-	{0, 5, 6, 1, 1, 4, 9, 5}, //LEFT
-	{2, 7, 4, 3, 3, 6, 11, 7}, //RIGHT
-	{0, 3, 4, 5, 0, 7, 8, 4}, //FRONT
-	{1, 6, 7, 2, 2, 5, 10, 6} //BACK
+	{P_CUFL, P_CUBL, P_CUBR, P_CUFR, P_EUF, P_EUL, P_EUB, P_EUR}, //UP
+	{P_CDBL, P_CDFL, P_CDFR, P_CDBR, P_EDF, P_EDR, P_EDB, P_EDL}, //DOWN
+	{P_CUFL, P_CDFL, P_CDBL, P_CUBL, P_EUL, P_EFL, P_EDL, P_EBL}, //LEFT
+	{P_CUBR, P_CDBR, P_CDFR, P_CUFR, P_EUR, P_EBR, P_EDR, P_EFR}, //RIGHT
+	{P_CUFL, P_CUFR, P_CDFR, P_CDFL, P_EUF, P_EFR, P_EDF, P_EFL}, //FRONT
+	{P_CUBL, P_CDBL, P_CDBR, P_CUBR, P_EUB, P_EBL, P_EDB, P_EBR}  //BACK
 };
 
 uint8_t get_next_pos(int move, int step) {
@@ -96,7 +94,7 @@ t_cube *rotation_cube(t_cube *cube, int move, bool free_old_cube) {
 		ret->corner_pos[cubes[next_pos]] = cube->corner_pos[cubes[i]];
 		//((move < M_L || move > M_RP) && move % 3 != 1) * (1 + (i % 2)): Same stuff than the one for edge orientation, but more complicated
 		//LEFT or RIGHT don't change the orientation, half turn neither. So the part before the * evaluates to 0 if the corner orientation doesn't change
-		//The part after evaluates to 1 or 2 in function of the number of the step, 2 out of 4 cubes are rotated ccw, and the other cw
+		//The part after evaluates to 1 or 2 in function of the number of the step, 2 out of 4 corners are rotated ccw, and the other cw
 		ret->corner_orientation[cubes[next_pos]] = \
 			(cube->corner_orientation[cubes[i]] \
 			+ (((move < M_L || move > M_RP) && move % 3 != 1) * (1 + (i % 2)))) % 3;
@@ -192,7 +190,7 @@ int main(int argc, char **argv) {
 	}
 	print_cube(cube);
 	int i = 0;
-	while (i < 10000000) {
+	while (i < 1000000000) {
 		cube = rotation_cube(cube, i % 18, true);
 		++i;
 	}
