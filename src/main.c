@@ -6,7 +6,7 @@
 /*   By: eduwer <eduwer@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/09/06 16:46:02 by eduwer            #+#    #+#             */
-/*   Updated: 2020/09/16 23:58:04 by eduwer           ###   ########.fr       */
+/*   Updated: 2020/09/18 12:45:03 by eduwer           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,7 +19,7 @@
  * the first on the line goes to the second, second to third... the last one
  * loops back to the beginning
  */
-const uint8_t cube_moves[6][8] = {
+const int_fast8_t cube_moves[6][8] = {
 	{P_CUFL, P_CUBL, P_CUBR, P_CUFR, P_EUF, P_EUL, P_EUB, P_EUR}, //UP
 	{P_CDBL, P_CDFL, P_CDFR, P_CDBR, P_EDF, P_EDR, P_EDB, P_EDL}, //DOWN
 	{P_CUFL, P_CDFL, P_CDBL, P_CUBL, P_EUL, P_EFL, P_EDL, P_EBL}, //LEFT
@@ -28,7 +28,7 @@ const uint8_t cube_moves[6][8] = {
 	{P_CUBL, P_CDBL, P_CDBR, P_CUBR, P_EUB, P_EBL, P_EDB, P_EBR}  //BACK
 };
 
-uint8_t get_next_pos(int move, int step) {
+uint_fast8_t get_next_pos(int_fast8_t move, int step) {
 	return ((step + (move % 3) + 1) % 4);
 }
 
@@ -43,16 +43,18 @@ t_cube	*duplicate_cube(const t_cube *in) {
 
 t_cube	*scramble_cube(char *str)
 {
-	char 	**strs = ft_strsplit(str, ' ');
-	t_cube	*ret = create_base_cube();
-	int		i = 0;
-	int		rotation;
+	char 			**strs = ft_strsplit(str, ' ');
+	t_cube			*ret = create_base_cube();
+	int				i = 0;
+	int_fast8_t	rotation;
 
+	if (strs == NULL)
+		return (NULL);
 	while (strs[i]) {
 		rotation = str_to_move(strs[i]);
 		if (rotation == -1)
 			return (NULL);
-		ret = rotation_cube(ret,  rotation, true);
+		ret = rotation_cube(ret, rotation, true);
 		if (ret == NULL)
 			return (NULL);
 		free(strs[i]);
@@ -69,11 +71,11 @@ t_cube	*scramble_cube(char *str)
  * The new cube is malloced, and the old one is not modified.
  * It is freed is free_old_cube is set to true (do not set it to true if it is not malloced!)
  */
-t_cube *rotation_cube(t_cube *cube, int move, bool free_old_cube) {
-	t_cube			*ret = duplicate_cube(cube);
-	const uint8_t	*cubes = cube_moves[move / 3];
-	uint8_t			next_pos;
-	int				i = 0;
+t_cube *rotation_cube(t_cube *cube, int_fast8_t move, bool free_old_cube) {
+	t_cube				*ret = duplicate_cube(cube);
+	const int_fast8_t	*cubes = cube_moves[move / 3];
+	uint_fast8_t		next_pos;
+	int					i = 0;
 
 	if (ret == NULL) {
 		printf("Error during rotation: can't allocate the cube\n");
@@ -112,8 +114,8 @@ t_cube *rotation_cube(t_cube *cube, int move, bool free_old_cube) {
 }
 
 t_cube *create_base_cube() {
-	int 	i = 0;
-	t_cube	*ret = (t_cube *)malloc(sizeof(t_cube));
+	uint_fast8_t	i = 0;
+	t_cube			*ret = (t_cube *)malloc(sizeof(t_cube));
 
 	if (ret == NULL)
 		return (NULL);
