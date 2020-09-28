@@ -6,7 +6,7 @@
 /*   By: eduwer <eduwer@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/09/06 16:46:02 by eduwer            #+#    #+#             */
-/*   Updated: 2020/09/18 12:45:03 by eduwer           ###   ########.fr       */
+/*   Updated: 2020/09/28 19:07:02 by eduwer           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,12 +20,12 @@
  * loops back to the beginning
  */
 const int_fast8_t cube_moves[6][8] = {
-	{P_CUFL, P_CUBL, P_CUBR, P_CUFR, P_EUF, P_EUL, P_EUB, P_EUR}, //UP
-	{P_CDBL, P_CDFL, P_CDFR, P_CDBR, P_EDF, P_EDR, P_EDB, P_EDL}, //DOWN
+	{P_CUBL, P_CUBR, P_CUFR, P_CUFL, P_EUF, P_EUL, P_EUB, P_EUR}, //UP
+	{P_CDFL, P_CDFR, P_CDBR, P_CDBL, P_EDF, P_EDR, P_EDB, P_EDL}, //DOWN
 	{P_CUFL, P_CDFL, P_CDBL, P_CUBL, P_EUL, P_EFL, P_EDL, P_EBL}, //LEFT
 	{P_CUBR, P_CDBR, P_CDFR, P_CUFR, P_EUR, P_EBR, P_EDR, P_EFR}, //RIGHT
 	{P_CUFL, P_CUFR, P_CDFR, P_CDFL, P_EUF, P_EFR, P_EDF, P_EFL}, //FRONT
-	{P_CUBL, P_CDBL, P_CDBR, P_CUBR, P_EUB, P_EBL, P_EDB, P_EBR}  //BACK
+	{P_CDBL, P_CDBR, P_CUBR, P_CUBL, P_EUB, P_EBL, P_EDB, P_EBR}  //BACK
 };
 
 uint_fast8_t get_next_pos(int_fast8_t move, int step) {
@@ -97,9 +97,12 @@ t_cube *rotation_cube(t_cube *cube, int_fast8_t move, bool free_old_cube) {
 		//((move < M_L || move > M_RP) && move % 3 != 1) * (1 + (i % 2)): Same stuff than the one for edge orientation, but more complicated
 		//LEFT or RIGHT don't change the orientation, half turn neither. So the part before the * evaluates to 0 if the corner orientation doesn't change
 		//The part after evaluates to 1 or 2 in function of the number of the step, 2 out of 4 corners are rotated ccw, and the other cw
-		ret->corner_orientation[cubes[next_pos]] = \
-			(cube->corner_orientation[cubes[i]] \
-			+ (((move < M_L || move > M_RP) && move % 3 != 1) * (1 + (i % 2)))) % 3;
+		ret->corner_orientation[cubes[next_pos]] = (cube->corner_orientation[cubes[i]] \
+			//Move is not L or R AND move is not half turn     (1 + (i % 2)) => 2 / 4 corners are rotated ccw, the other cw
+			+ (((move < M_L || move > M_RP) && move % 3 != 1) * (1 + (i % 2))) \
+			//L and R swaps the corner orientation each turn for orientation 1 and 2, and does nothing if the orientation is 0
+			/*+ ((move >= M_L && move <= M_RP && move % 3 != 1) * cube->corner_orientation[cubes[i]])*/) \
+			% 3;
 		ret->edge_pos[cubes[next_pos + 4]] = cube->edge_pos[cubes[i + 4]];
 		//(move < M_L && move % 3 != 1): move is UP or DOWN and move is not a half turn (M_U2, M_D2)
 		//it adds one to the orientation if it is the case, with % 2 it effectively swaps the orientation if the condition evaluates to true
@@ -135,7 +138,7 @@ void print_cube(t_cube *cube) {
 	int	i = 0;
 
 	printf("Cube:\n");
-	printf("Corner positions: ");
+	printf("Corner positions:    ");
 	while (i < 8) {
 		printf("%d", (int)cube->corner_pos[i]);
 		if (i < 7)
@@ -155,7 +158,7 @@ void print_cube(t_cube *cube) {
 		++i;
 	}
 	i = 0;
-	printf("Edge positions: ");
+	printf("Edge positions:      ");
 	while (i < 12) {
 		printf("%d", (int)cube->edge_pos[i]);
 		if (i < 11)
@@ -165,7 +168,7 @@ void print_cube(t_cube *cube) {
 		++i;
 	}
 	i = 0;
-	printf("Edge orientations: ");
+	printf("Edge orientations:   ");
 	while (i < 12) {
 		printf("%d", (int)cube->edge_orientation[i]);
 		if (i < 11)
@@ -176,8 +179,30 @@ void print_cube(t_cube *cube) {
 	}
 }
 
+void	print_id(uint_fast8_t *id) {
+	unsigned char i = 0;
+
+	while (i < ((unsigned char *)id)[0]) {
+		printf("%2d", ((unsigned char *)id)[i]);
+		if (i < ((unsigned char *)id)[0] - 1)
+			printf(", ");
+		++i;
+	}
+	printf("\n");
+}
+
+void	print_cube_id(t_cube *cube, int step) {
+	uint_fast8_t id[41];
+
+	get_cube_id(step, cube, id);
+	print_id(id);
+}
+
+
 int main(int argc, char **argv) {
 	t_cube *cube;
+
+	//melange qui pose pb: L R' F2 U R' U L'
 
 	if (argc == 1) {
 		char *default_scramble = "D2 U' R2 U F2 D2 U' R2 U' B' L2 R' B' D2 U B2 L' D' R2";
@@ -190,14 +215,25 @@ int main(int argc, char **argv) {
 		printf("Error while scrambling the cube\n");
 		return (-1);
 	}
-	print_cube(cube);
-	int i = 0;
-	while (i < 1000000000) {
-		cube = rotation_cube(cube, i % 18, true);
+	
+	char *ret = solve(cube);
+	if (ret != NULL)
+		printf("%s\n", ret);
+	else
+		printf("Error while solving the cube\n");
+
+	cube = create_base_cube();
+	print_cube_id(cube, 1);
+
+	/*int i = 0;
+	while (i < 18) {
+		cube = create_base_cube();
+		cube = rotation_cube(cube, i, true);
+		printf("For move %s:\n", move_to_str(i));		
+		print_cube(cube);
+		free(cube);
 		++i;
-	}
-	print_cube(cube);
-	free(cube);
+	}*/
 
 	//Yes it works... Is it a good idea ? Probably not
 	//printf("\e[1;34m⬛\e[m\e[0;31m⬛\e[m\e[0;32m⬛\e[m\e[1;33m⬛\e[m\n");

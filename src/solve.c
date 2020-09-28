@@ -6,11 +6,12 @@
 /*   By: eduwer <eduwer@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/09/14 00:29:36 by eduwer            #+#    #+#             */
-/*   Updated: 2020/09/22 00:34:35 by eduwer           ###   ########.fr       */
+/*   Updated: 2020/09/29 00:46:12 by eduwer           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include <rubik.h>
+#include <hashmap.h>
 
 int allowed_moves[4] = {
 	0b111111111111111111, //Allow every moves
@@ -19,169 +20,160 @@ int allowed_moves[4] = {
 	0b010010010010010010 //Only allow half turns
 };
 
-/**
- * Corners at even positions have the same orbit, same for odd posisions 
- * Same orbit = you can use only half turn to move to any point of the orbit
- */
-uint_fast8_t	orbit_state(t_cube *cube) {
-	uint_fast8_t	ret = 0;
-	int				i = 0;
-
-	while (i < 8) {
-		ret |= (cube->corner_pos[i] % 2 == i % 2) << i;
-		++i;
-	}
-	return (ret);
+void			error_and_exit(char *str) {
+	printf("%s\n", str);
+	exit(1);
 }
 
-/**
- * Edges are on their slice
- * Same slice = you can use only half turn to move any piece of the slice
- * To another place on the slice
- * Edges pos are defined slice by slice: slice 0,1,2,3 = slice M,
- * 4,5,6,7 = slice S, 8,9,10,11 = slice E.
- */
-uint_fast16_t	slice_state(t_cube *cube) {
-	uint_fast16_t	ret = 0;
-	int				i = 0;
-
-	while (i < 12) {
-		ret |= (cube->edge_pos[i] / 4 == i / 4) << i;
-		++i;
-	}
-	return (ret);
-}
-
-//same as slice_state, but just for the M layer (used in the second state of the solving)
-uint_fast8_t	m_slice_state(t_cube *cube) {
-	uint_fast8_t	ret = 0;
-	int				i = 0;
-
-	while (i < 4) {
-		ret |= (cube->edge_pos[i] / 4 == 0) << i;
-		++i;
-	}
-	return (ret);
-}
-
-bool	check_cube_state(int step, t_cube *base, t_cube *cube) {
-	if (step == 0) {
-		//Only check edge orientation
-		return (memcmp(base->edge_orientation, cube->edge_orientation, sizeof(uint_fast8_t) * 12) == 0);
-	} else if (step == 1) {
-		//Only check corner orientation & M slice edges (between left and right)
-		return (memcmp(base->corner_orientation, cube->corner_orientation, sizeof(uint_fast8_t) * 8) == 0 \
-			&& m_slice_state(base) == m_slice_state(cube));
-	} else if (step == 2) {
-		return (orbit_state(base) == orbit_state(cube) \
-			&& slice_state(base) == slice_state(cube));
-	} else {
-		return (memcmp(base, cube, sizeof(t_cube)) == 0);
-	}
-}
-
-t_cube_state	*init_cube_state(t_cube *cube) {
-	t_cube_state	*ret;
-
-	if (cube == NULL)
-		return (NULL);
-	if ((ret = (t_cube_state *)malloc(sizeof(t_cube_state) * 1)) == NULL)
-		return (NULL);
-	ret->cube = cube;
-	ret->moves = NULL;
-	ret->next = NULL;
-	return (ret);
-}
-
-/** TODO
- * Merges the moves of the matching cubes, and frees everything
- */
-int_fast8_t		*merge_paths(t_cube_state *forward,t_cube_state *backward)
+int_fast8_t		*merge_paths(t_cube_list *forward, t_cube_list *backward)
 {
-	return (NULL);
+	int_fast8_t *ret = (int_fast8_t *)malloc(sizeof(int_fast8_t) * (forward->nb_moves + backward->nb_moves + 1));
+	int			i = 0;
+
+	if (ret == NULL)
+		error_and_exit("Error during path merging");
+	i = 0;
+	printf("Moves forward: ");
+	while (i < forward->nb_moves) {
+		printf("%s, ", move_to_str(forward->moves[i]));
+		++i;
+	}
+	printf("\nMoves backward: ");
+	i = 0;
+	while (i < backward->nb_moves) {
+		printf("%s, ", move_to_str(backward->moves[i]));
+		++i;
+	}
+	printf("\n");
+	printf("Matching cubes are: ");
+	print_cube(forward->cube);
+	print_id(forward->id);
+	print_cube(backward->cube);
+	print_id(backward->id);
+	i = 0;
+	memcpy(ret, forward->moves, sizeof(int_fast8_t) * forward->nb_moves);
+	while (i < backward->nb_moves) {
+		ret[forward->nb_moves + i] = inverse_move(backward->moves[backward->nb_moves - i - 1]);
+		++i;
+	}
+	ret[forward->nb_moves + backward->nb_moves] = -1;
+	return (ret);
 }
 
-void			free_cube_list(t_cube_state *list) {
-	
+t_cube_list	*init_with_move(int step, t_cube_list *ptr, t_cube *cube, int_fast8_t move) {
+	t_cube_list *newCube = init_cube_list(step, cube, NULL, 0, ptr->is_forward);
+
+	if (newCube == NULL)
+		error_and_exit("Error during cube state initialization");
+	newCube->nb_moves = ptr->nb_moves + 1;
+	newCube->moves = (int_fast8_t *)malloc(sizeof(int_fast8_t) * newCube->nb_moves);
+	if (newCube->moves == NULL)
+		error_and_exit("Malloc error during move initialization");
+	if (ptr->nb_moves != 0)
+		memcpy(newCube->moves, ptr->moves, sizeof(int_fast8_t) * ptr->nb_moves);
+	newCube->moves[newCube->nb_moves - 1] = move;
+	return (newCube);
 }
 
-int_fast8_t		*parkour_list(int step, t_cube_state **one, t_cube_state **last, t_cube_state *two, bool is_reverse) {
-	int				current_depth = (*one)->nb_moves;
+void	print_list_length(t_cube_list *list, t_cube_list *ptr) {
+	int i = 0;
+	int ptr_pos = -1;
+
+	while (list != NULL) {
+		i++;
+		if (list == ptr)
+			ptr_pos = i;
+		list = list->next;
+	}
+	printf("List length: %d, ptr is at %d\n", i, ptr_pos);
+}
+
+int_fast8_t		*generate_cubes(int step, t_cube_list *ptr, t_cube_list **last, Hashmap *rubik_map) {
 	t_cube			*new_cube;
-	int_fast8_t 	i;
-	t_cube_state	*ptr;
-	
-	while ((*one)->nb_moves == current_depth) {
-		i = 0;
-		while (i < 18) {
-			if (allowed_moves[step] & 1 << (17 - i) && \
-				((*one)->nb_moves == 0 || (*one)->moves[(*one)->nb_moves - 1] / 3 != i / 3)) {
-				if ((new_cube = rotation_cube((*one)->cube, i, false)) == NULL) {
-					printf("Error during turn\n");
-					exit(1);
-				}
-				ptr = two;
-				while (ptr != NULL) {
-					if (check_cube_state(step, (*one)->cube, ptr->cube)) { //It's a match!
-						if (is_reverse)
-							return (merge_paths(*one, two));
-						else
-							return (merge_paths(two, *one));
-					}
-					append_cube_to_end_and_free_first(one, last, new_cube, i);
-					ptr = ptr->next;
-				}
+	int_fast8_t 	i = 0;
+	t_cube_list		*ret;
+	t_cube_list		*new_list;
+
+	while (i < 18) {
+		if (allowed_moves[step] & 1 << (17 - i) && \
+			(ptr->nb_moves == 0 || ptr->moves[ptr->nb_moves - 1] / 3 != i / 3)) {
+			if ((new_cube = rotation_cube(ptr->cube, i, false)) == NULL) {
+				printf("Error during turn\n");
+				exit(1);
 			}
-			++i;
+			new_list = init_with_move(step, ptr, new_cube, i);
+			//append_cube_to_end(step, ptr, last, new_cube, i);
+			ret = (t_cube_list *)hashmapGet(rubik_map, new_list->id);
+			if (ret == NULL) { //We didn't found it in the map, so we should add it
+				(*last)->next = new_list;
+				*last = new_list;
+				hashmapPut(rubik_map, (*last)->id, *last);
+			}
+			else if (ret->is_forward != new_list->is_forward) { //We found a connection between forward and backward
+				(*last)->next = new_list;
+				*last = new_list;
+				if (ret->is_forward)
+					return (merge_paths(ret, *last));
+				else
+					return (merge_paths(*last, ret));
+			}
 		}
+		++i;
 	}
 	return (NULL);
 }
 
 int_fast8_t		*thistlewaite_step(int step, t_cube *cube) {
-	int_fast8_t		i;
-	t_cube_state	*forward = init_cube_state(cube);
-	t_cube_state	*last_forward = forward;
-	t_cube_state	*backward = init_cube_state(create_base_cube());
-	t_cube_state	*last_backward = backward;
+	t_cube_list		*first;
+	t_cube_list		*ptr;
+	t_cube_list		*last;
+	Hashmap			*rubik_map = hashmapCreate(500000, rubik_hash, rubik_equals);
 	int_fast8_t		*ret;
 
-	if (forward == NULL || backward == NULL)
+	first = init_cube_list(step, duplicate_cube(cube), NULL, 0, true);
+	last = init_cube_list(step, create_base_cube(), NULL, 0, false);
+	printf("Starting cube is: ");
+	print_cube(first->cube);
+	printf("Starting cube id is: ");
+	print_cube_id(first->cube, step);
+	printf("Goal cube id is:     ");
+	print_cube_id(last->cube, step);
+	if (first == NULL || last == NULL || rubik_map == NULL)
 		return (NULL);
-	if (check_cube_state(step, forward[0].cube, backward[0].cube)) {
-		free_cube_list(forward);
-		free_cube_list(backward);
-		return (merge_paths(forward, forward, backward, backward));
+	hashmapPut(rubik_map, first->id, first);
+	if (hashmapPut(rubik_map, last->id, last) != NULL) { //The cubes are equivalent for the step
+		ret = merge_paths(first, last);
+		free_cube_list(first);
+		hashmapFree(rubik_map);
+		return (ret);
 	}
-	while (true) {
-		if ((ret = parkour_list(step, &forward, &last_forward, backward, false)) != NULL) {
-			free_cube_list(forward);
-			free_cube_list(backward);
+	first->next = last;
+	ptr = first;
+	while (ptr != NULL) {
+		if ((ret = generate_cubes(step, ptr, &last, rubik_map)) != NULL) {
+			free_cube_list(first);
+			hashmapFree(rubik_map);
 			return (ret);
 		}
-		if ((ret = parkour_list(step, &backward, &last_backward, forward, true)) != NULL) {
-			free_cube_list(forward);
-			free_cube_list(backward);
-			return (ret);
-		}
-
+		ptr = ptr->next;
 	}
+	return (NULL);
 }
 
 char	*append_moves(char *str, int_fast8_t *moves) {
 	int		i = 0;
 	int		ret_asprintf;
-	char	*ret;
+	char	*ret = str;
 
 	while (moves[i] != -1) {
-		if (str = NULL)
+		if (str == NULL)
 			ret_asprintf = asprintf(&ret, "%s", move_to_str(moves[i]));
 		else {
 			ret_asprintf = asprintf(&ret, "%s, %s", str, move_to_str(moves[i]));
 			free(str);
 		}
 		if (ret_asprintf == -1)
-			return (NULL);
+			error_and_exit("Error during asprintf\n");
 		str = ret;
 		++i;
 	}
@@ -192,14 +184,26 @@ char	*solve(t_cube *cube) {
 	int 			step = 0;
 	int_fast8_t		*moves;
 	char			*ret = NULL;
+	t_cube			*copy = duplicate_cube(cube);
+	int				i;
 
+	if (copy == NULL)
+		return (NULL);
 	while (step < 4) {
-		moves = thistlewaite_step(step, cube);
+		printf("------------------------------- STEP %d\n", step);
+		moves = thistlewaite_step(step, copy);
 		if (moves == NULL)
 			return (NULL);
 		ret = append_moves(ret, moves);
-		if (ret == NULL)
-			return (NULL);
+		i = 0;
+		while (moves[i] != -1) {
+			copy = rotation_cube(copy, moves[i], true);
+			++i;
+		}
+		printf("Resultant cube id is: ");
+		print_cube_id(copy, step);
+		printf("Current solution is %s\n", ret);
+		free(moves);
 		++step;
 	}
 	return (ret);
