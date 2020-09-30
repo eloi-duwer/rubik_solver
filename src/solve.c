@@ -6,7 +6,7 @@
 /*   By: eduwer <eduwer@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/09/14 00:29:36 by eduwer            #+#    #+#             */
-/*   Updated: 2020/09/29 00:46:12 by eduwer           ###   ########.fr       */
+/*   Updated: 2020/10/01 01:19:32 by eduwer           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,25 +32,6 @@ int_fast8_t		*merge_paths(t_cube_list *forward, t_cube_list *backward)
 
 	if (ret == NULL)
 		error_and_exit("Error during path merging");
-	i = 0;
-	printf("Moves forward: ");
-	while (i < forward->nb_moves) {
-		printf("%s, ", move_to_str(forward->moves[i]));
-		++i;
-	}
-	printf("\nMoves backward: ");
-	i = 0;
-	while (i < backward->nb_moves) {
-		printf("%s, ", move_to_str(backward->moves[i]));
-		++i;
-	}
-	printf("\n");
-	printf("Matching cubes are: ");
-	print_cube(forward->cube);
-	print_id(forward->id);
-	print_cube(backward->cube);
-	print_id(backward->id);
-	i = 0;
 	memcpy(ret, forward->moves, sizeof(int_fast8_t) * forward->nb_moves);
 	while (i < backward->nb_moves) {
 		ret[forward->nb_moves + i] = inverse_move(backward->moves[backward->nb_moves - i - 1]);
@@ -75,19 +56,6 @@ t_cube_list	*init_with_move(int step, t_cube_list *ptr, t_cube *cube, int_fast8_
 	return (newCube);
 }
 
-void	print_list_length(t_cube_list *list, t_cube_list *ptr) {
-	int i = 0;
-	int ptr_pos = -1;
-
-	while (list != NULL) {
-		i++;
-		if (list == ptr)
-			ptr_pos = i;
-		list = list->next;
-	}
-	printf("List length: %d, ptr is at %d\n", i, ptr_pos);
-}
-
 int_fast8_t		*generate_cubes(int step, t_cube_list *ptr, t_cube_list **last, Hashmap *rubik_map) {
 	t_cube			*new_cube;
 	int_fast8_t 	i = 0;
@@ -102,7 +70,6 @@ int_fast8_t		*generate_cubes(int step, t_cube_list *ptr, t_cube_list **last, Has
 				exit(1);
 			}
 			new_list = init_with_move(step, ptr, new_cube, i);
-			//append_cube_to_end(step, ptr, last, new_cube, i);
 			ret = (t_cube_list *)hashmapGet(rubik_map, new_list->id);
 			if (ret == NULL) { //We didn't found it in the map, so we should add it
 				(*last)->next = new_list;
@@ -116,6 +83,9 @@ int_fast8_t		*generate_cubes(int step, t_cube_list *ptr, t_cube_list **last, Has
 					return (merge_paths(ret, *last));
 				else
 					return (merge_paths(*last, ret));
+			}
+			else { //We already found this cube for this direction, free it
+				free_one_cube_list(new_list);
 			}
 		}
 		++i;
@@ -132,14 +102,9 @@ int_fast8_t		*thistlewaite_step(int step, t_cube *cube) {
 
 	first = init_cube_list(step, duplicate_cube(cube), NULL, 0, true);
 	last = init_cube_list(step, create_base_cube(), NULL, 0, false);
-	printf("Starting cube is: ");
-	print_cube(first->cube);
-	printf("Starting cube id is: ");
-	print_cube_id(first->cube, step);
-	printf("Goal cube id is:     ");
-	print_cube_id(last->cube, step);
 	if (first == NULL || last == NULL || rubik_map == NULL)
 		return (NULL);
+	first->next = last;
 	hashmapPut(rubik_map, first->id, first);
 	if (hashmapPut(rubik_map, last->id, last) != NULL) { //The cubes are equivalent for the step
 		ret = merge_paths(first, last);
@@ -147,7 +112,6 @@ int_fast8_t		*thistlewaite_step(int step, t_cube *cube) {
 		hashmapFree(rubik_map);
 		return (ret);
 	}
-	first->next = last;
 	ptr = first;
 	while (ptr != NULL) {
 		if ((ret = generate_cubes(step, ptr, &last, rubik_map)) != NULL) {
@@ -157,6 +121,7 @@ int_fast8_t		*thistlewaite_step(int step, t_cube *cube) {
 		}
 		ptr = ptr->next;
 	}
+	printf("Could not find any solution to the step %d\n", step);
 	return (NULL);
 }
 
@@ -170,10 +135,10 @@ char	*append_moves(char *str, int_fast8_t *moves) {
 			ret_asprintf = asprintf(&ret, "%s", move_to_str(moves[i]));
 		else {
 			ret_asprintf = asprintf(&ret, "%s, %s", str, move_to_str(moves[i]));
-			free(str);
 		}
 		if (ret_asprintf == -1)
 			error_and_exit("Error during asprintf\n");
+		free(str);
 		str = ret;
 		++i;
 	}
@@ -190,7 +155,6 @@ char	*solve(t_cube *cube) {
 	if (copy == NULL)
 		return (NULL);
 	while (step < 4) {
-		printf("------------------------------- STEP %d\n", step);
 		moves = thistlewaite_step(step, copy);
 		if (moves == NULL)
 			return (NULL);
@@ -200,11 +164,10 @@ char	*solve(t_cube *cube) {
 			copy = rotation_cube(copy, moves[i], true);
 			++i;
 		}
-		printf("Resultant cube id is: ");
-		print_cube_id(copy, step);
-		printf("Current solution is %s\n", ret);
 		free(moves);
 		++step;
 	}
+	if (copy != NULL)
+		free(copy);
 	return (ret);
 }

@@ -6,7 +6,7 @@
 /*   By: eduwer <eduwer@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/09/06 16:46:02 by eduwer            #+#    #+#             */
-/*   Updated: 2020/09/28 19:07:02 by eduwer           ###   ########.fr       */
+/*   Updated: 2020/09/30 20:10:25 by eduwer           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -134,75 +134,8 @@ t_cube *create_base_cube() {
 	return (ret);
 }
 
-void print_cube(t_cube *cube) {
-	int	i = 0;
-
-	printf("Cube:\n");
-	printf("Corner positions:    ");
-	while (i < 8) {
-		printf("%d", (int)cube->corner_pos[i]);
-		if (i < 7)
-			printf(", ");
-		else
-			printf("\n");
-		++i;
-	}
-	i = 0;
-	printf("Corner orientations: ");
-	while (i < 8) {
-		printf("%d", (int)cube->corner_orientation[i]);
-		if (i < 7)
-			printf(", ");
-		else
-			printf("\n");
-		++i;
-	}
-	i = 0;
-	printf("Edge positions:      ");
-	while (i < 12) {
-		printf("%d", (int)cube->edge_pos[i]);
-		if (i < 11)
-			printf(", ");
-		else
-			printf("\n");
-		++i;
-	}
-	i = 0;
-	printf("Edge orientations:   ");
-	while (i < 12) {
-		printf("%d", (int)cube->edge_orientation[i]);
-		if (i < 11)
-			printf(", ");
-		else
-			printf("\n");
-		++i;
-	}
-}
-
-void	print_id(uint_fast8_t *id) {
-	unsigned char i = 0;
-
-	while (i < ((unsigned char *)id)[0]) {
-		printf("%2d", ((unsigned char *)id)[i]);
-		if (i < ((unsigned char *)id)[0] - 1)
-			printf(", ");
-		++i;
-	}
-	printf("\n");
-}
-
-void	print_cube_id(t_cube *cube, int step) {
-	uint_fast8_t id[41];
-
-	get_cube_id(step, cube, id);
-	print_id(id);
-}
-
-
 int main(int argc, char **argv) {
 	t_cube *cube;
-
-	//melange qui pose pb: L R' F2 U R' U L'
 
 	if (argc == 1) {
 		char *default_scramble = "D2 U' R2 U F2 D2 U' R2 U' B' L2 R' B' D2 U B2 L' D' R2";
@@ -221,22 +154,7 @@ int main(int argc, char **argv) {
 		printf("%s\n", ret);
 	else
 		printf("Error while solving the cube\n");
-
-	cube = create_base_cube();
-	print_cube_id(cube, 1);
-
-	/*int i = 0;
-	while (i < 18) {
-		cube = create_base_cube();
-		cube = rotation_cube(cube, i, true);
-		printf("For move %s:\n", move_to_str(i));		
-		print_cube(cube);
-		free(cube);
-		++i;
-	}*/
-
-	//Yes it works... Is it a good idea ? Probably not
-	//printf("\e[1;34m⬛\e[m\e[0;31m⬛\e[m\e[0;32m⬛\e[m\e[1;33m⬛\e[m\n");
-
+	free(ret);
+	free(cube);
 	return (0);
 }

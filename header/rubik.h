@@ -6,7 +6,7 @@
 /*   By: eduwer <eduwer@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/09/06 16:46:51 by eduwer            #+#    #+#             */
-/*   Updated: 2020/09/28 18:10:45 by eduwer           ###   ########.fr       */
+/*   Updated: 2020/10/01 00:54:01 by eduwer           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -43,11 +43,10 @@ typedef struct s_cube_list {
 	int_fast8_t			*moves;
 	int					nb_moves;
 	bool				is_forward;
-	uint_fast8_t		id[41];
+	uint_fast8_t		id[21];
 	struct s_cube_list	*next;
 }				t_cube_list;
 
-void			print_cube(t_cube *cube);
 t_cube			*create_base_cube();
 t_cube			*rotation_cube(t_cube *cube, int_fast8_t move, bool free_old_cube);
 t_cube			*duplicate_cube(const t_cube *in);
@@ -66,7 +65,5 @@ void			free_cube_list(t_cube_list *list);
 int				rubik_hash(void *key);
 bool			rubik_equals(void *a, void *b);
 uint_fast8_t	orbit_state(t_cube *cube);
-void			print_id(uint_fast8_t *id);
-void			print_cube_id(t_cube *cube, int step);
 
 #endif

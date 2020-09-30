@@ -9,7 +9,7 @@ NAME = rubik
 
 CC = gcc
 
-CFLAGS = -Wall -Wextra -I./header -g
+CFLAGS = -Wall -Wextra -I./header -O3
 
 SRCF = ./src/
 
@@ -24,7 +24,7 @@ $(NAME): $(OBJS)
 
 $(OBJF)%.o: $(SRCF)%.c
 	@mkdir -p $(@D)
-	$(CC) -o $@ $(CFLAGS) -c $(addprefix $(SRCF), $*.c) -g
+	$(CC) -o $@ $(CFLAGS) -c $(addprefix $(SRCF), $*.c) -O3
 
 clean:
 	rm -rf $(OBJS)
