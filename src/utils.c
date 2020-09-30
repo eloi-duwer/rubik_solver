@@ -6,7 +6,7 @@
 /*   By: eduwer <eduwer@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/09/24 19:22:39 by eduwer            #+#    #+#             */
-/*   Updated: 2020/10/01 00:54:15 by eduwer           ###   ########.fr       */
+/*   Updated: 2020/10/01 01:31:52 by eduwer           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -122,22 +122,31 @@ uint_fast8_t	*get_cube_id(int step, t_cube *cube, uint_fast8_t *ret) {
 	if (ret == NULL)
 		return (NULL);
 	memset(ret, 0, sizeof(uint_fast8_t) * 21);
-	if (step == 0) {
+	if (step == 0)
+	{
 		ret[0] = 13 * sizeof(uint_fast8_t);
 		memcpy(&ret[1], cube->edge_orientation, sizeof(uint_fast8_t) * 12);
-	} else if (step == 1) {
+	}
+	else if (step == 1)
+	{
 		ret[0] = 9 * sizeof(uint_fast8_t) + sizeof(uint_fast16_t);
 		memcpy(&ret[1], cube->corner_orientation, sizeof(uint_fast8_t) * 8);
 		uint_fast16_t	slice = m_slice_state(cube);
 		memcpy(&ret[9], &slice, sizeof(uint_fast16_t));
-	} else if (step == 2) {
+	}
+	else if (step == 2)
+	{
 		ret[0] = 2 * sizeof(uint_fast8_t) + sizeof(uint_fast32_t) + sizeof(uint_fast16_t);
 		ret[1] = corner_parity(cube);
 		uint_fast32_t slice = slice_state(cube);
 		memcpy(&ret[2], &slice, sizeof(uint_fast32_t));
 		uint_fast16_t half_orbit = half_orbit_state(cube);
 		memcpy(&ret[2 + sizeof(uint_fast32_t)], &half_orbit, sizeof(uint_fast16_t));
-	} else {
+	}
+	else
+	{	/** We don't care about the orientations, at this step they are all at 0,
+		* and it reduces tremendously the hashes collisions (Many multlipications by 0)
+		*/
 		ret[0] = 21 * sizeof(uint_fast8_t);
 		memcpy(&ret[1], cube, sizeof(uint_fast8_t) * 20);
 	}
