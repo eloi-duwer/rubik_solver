@@ -6,7 +6,7 @@
 /*   By: eduwer <eduwer@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/09/14 00:29:36 by eduwer            #+#    #+#             */
-/*   Updated: 2020/10/01 18:23:05 by eduwer           ###   ########.fr       */
+/*   Updated: 2020/10/01 18:32:48 by eduwer           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -176,7 +176,7 @@ char	*solve(t_cube *cube, bool verbose)
 	int_fast8_t		*moves;
 	char			*ret = NULL;
 	t_cube			*copy = duplicate_cube(cube);
-	int				i = 0;
+	int				i;
 	int				nb_moves = 0;
 
 	if (copy == NULL)
@@ -193,13 +193,13 @@ char	*solve(t_cube *cube, bool verbose)
 			else if (step == 2)
 				printf("Solving corners orbit + all edges slices + corner parity\n");
 			else
-				printf("Final step, solving the cube\n");
-
+				printf("Final step, solving the whole cube\n");
 		}
 		moves = thistlewaite_step(step, copy);
 		if (moves == NULL)
 			return (NULL);
 		ret = append_moves(ret, moves, verbose);
+		i = 0;
 		while (moves[i] != -1)
 		{
 			copy = rotation_cube(copy, moves[i], true);
