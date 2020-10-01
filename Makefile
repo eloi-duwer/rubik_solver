@@ -3,13 +3,15 @@ SRC_NAME = main.c \
 	conv.c \
 	solve.c \
 	hashmap.c \
-	utils.c
+	utils.c \
+	rotation.c \
+	get_id.c
 
 NAME = rubik
 
 CC = gcc
 
-CFLAGS = -Wall -Wextra -I./header -O3
+CFLAGS = -Wall -Wextra -Werror -I./header -O3
 
 SRCF = ./src/
 

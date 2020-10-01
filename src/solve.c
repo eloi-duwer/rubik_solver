@@ -6,7 +6,7 @@
 /*   By: eduwer <eduwer@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/09/14 00:29:36 by eduwer            #+#    #+#             */
-/*   Updated: 2020/10/01 18:32:48 by eduwer           ###   ########.fr       */
+/*   Updated: 2020/10/01 21:40:55 by eduwer           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,7 +26,7 @@ void			error_and_exit(char *str)
 	exit(1);
 }
 
-int_fast8_t		*merge_paths(t_cube_list *forward, t_cube_list *backward)
+static int_fast8_t		*merge_paths(t_cube_list *forward, t_cube_list *backward)
 {
 	int_fast8_t *ret = (int_fast8_t *)malloc(sizeof(int_fast8_t) * (forward->nb_moves + backward->nb_moves + 1));
 	int			i = 0;
@@ -43,7 +43,7 @@ int_fast8_t		*merge_paths(t_cube_list *forward, t_cube_list *backward)
 	return (ret);
 }
 
-t_cube_list	*init_with_move(int step, t_cube_list *ptr, t_cube *cube, int_fast8_t move)
+static t_cube_list	*init_with_move(int step, t_cube_list *ptr, t_cube *cube, int_fast8_t move)
 {
 	t_cube_list *newCube = init_cube_list(step, cube, NULL, 0, ptr->is_forward);
 
@@ -59,7 +59,7 @@ t_cube_list	*init_with_move(int step, t_cube_list *ptr, t_cube *cube, int_fast8_
 	return (newCube);
 }
 
-int_fast8_t		*generate_cubes(int step, t_cube_list *ptr, t_cube_list **last, Hashmap *rubik_map)
+static int_fast8_t		*generate_cubes(int step, t_cube_list *ptr, t_cube_list **last, Hashmap *rubik_map)
 {
 	t_cube			*new_cube;
 	int_fast8_t 	i = 0;
@@ -101,7 +101,7 @@ int_fast8_t		*generate_cubes(int step, t_cube_list *ptr, t_cube_list **last, Has
 	return (NULL);
 }
 
-int_fast8_t		*thistlewaite_step(int step, t_cube *cube)
+static int_fast8_t		*thistlewaite_step(int step, t_cube *cube)
 {
 	t_cube_list		*first;
 	t_cube_list		*ptr;
@@ -137,44 +137,112 @@ int_fast8_t		*thistlewaite_step(int step, t_cube *cube)
 	return (NULL);
 }
 
-char	*append_moves(char *str, int_fast8_t *moves, bool verbose)
+static int_fast8_t	*append_moves(int_fast8_t *old_moves, int_fast8_t *new_moves, bool verbose)
 {
-	int		i = 0;
-	int		ret_asprintf;
-	char	*ret = str;
-	char	*move;
+	int_fast8_t	*ret;
+	int i = 0;
+	int	j = 0;
+
+	while (old_moves != NULL && old_moves[i] != -1)
+		++i;
 
 	if (verbose == true)
 		printf("Moves for this step: ");
-	while (moves[i] != -1)
+	while (new_moves != NULL && new_moves[j] != -1)
 	{
-		move = move_to_str(moves[i]);
-		if (verbose == true) {
-			if (i == 0)
-				printf("%s", move);
-			else
-				printf(", %s", move);
-		}
-		if (str == NULL)
-			ret_asprintf = asprintf(&ret, "%s", move);
-		else
-			ret_asprintf = asprintf(&ret, "%s, %s", str, move);
-		if (ret_asprintf == -1)
-			error_and_exit("Error during asprintf\n");
-		free(str);
-		str = ret;
-		++i;
+		if (verbose == true)
+			printf("%s ", move_to_str(new_moves[j]));
+		++j;
 	}
 	if (verbose == true)
 		printf("\n");
+	ret = (int_fast8_t *)malloc(sizeof(int_fast8_t) * (i + j + 1));
+	if (ret == NULL)
+		error_and_exit("Error during move concatenation\n");
+	memcpy(ret, old_moves, sizeof(int_fast8_t) * i);
+	memcpy(&ret[i], new_moves, sizeof(int_fast8_t) * j);
+	ret[i + j] = -1;
+	free(old_moves);
 	return (ret);
 }
 
-char	*solve(t_cube *cube, bool verbose)
+static int_fast8_t	*merge_moves(int_fast8_t *moves, int i, int j)
+{
+	int				delta;
+	int_fast8_t		*ret;
+	int				size_moves = 0;
+	int				pt = 0;
+
+	while (moves[size_moves] != -1)
+		++size_moves;
+	delta = ((moves[i] % 3) + (moves[j] % 3) + 2) % 4;
+	ret = (int_fast8_t *)malloc(sizeof(int_fast8_t) * size_moves - (delta == 0));
+	if (ret == NULL)
+		return (NULL);
+	memcpy(ret, moves, sizeof(int_fast8_t) * i);
+	pt = i;
+	if (delta > 0)
+	{
+		ret[i] = moves[i] - (moves[i] % 3) + (delta - 1);
+		++pt;
+	}
+	++i;
+	while (i <= j - 1)
+	{
+		ret[pt] = moves[i];
+		++i;
+		++pt;
+	}
+	++j;
+	while (moves[j] != -1)
+	{
+		ret[pt] = moves[j];
+		++j;
+		++pt;
+	}
+	ret[pt] = -1;
+	free(moves);
+	return (ret);
+}
+
+/**
+ * Find and patch moves redundancies:
+ * Between steps, you can have the some move repetition, eg U U2 or R L R' (L does not move any cubes in R, so it's like R R' L)
+ * That can be simplified: U and U2 merges into U' for example
+ */
+static int_fast8_t	*optimize_moves(int_fast8_t *moves)
+{
+	int	i = 0;
+	int_fast8_t	*ret;
+
+	while (moves && moves[i] != -1)
+	{
+		if (i >= 1 && moves[i] / 3 == moves[i - 1] / 3) //The moves at index i - 1 and i moves the same face
+		{
+			ret = merge_moves(moves, i - 1, i);
+			if (ret == NULL)
+				return (moves);
+			else
+				return (optimize_moves(ret));
+		}
+		else if (i >= 2 && (moves[i] / 6 == moves[i - 1] / 6 && moves[i] / 3 == moves[i - 2] / 3)) //The moves at index i - 2 and i moves the same face, and the move at index i - 1 does not interfere with this face
+		{
+			ret = merge_moves(moves, i - 2, i);
+			if (ret == NULL)
+				return (moves);
+			else
+				return (optimize_moves(ret));
+		}
+		++i;
+	}
+	return (moves);
+}
+
+int_fast8_t *solve(t_cube *cube, bool verbose)
 {
 	int 			step = 0;
 	int_fast8_t		*moves;
-	char			*ret = NULL;
+	int_fast8_t		*all_moves = NULL;
 	t_cube			*copy = duplicate_cube(cube);
 	int				i;
 	int				nb_moves = 0;
@@ -198,7 +266,6 @@ char	*solve(t_cube *cube, bool verbose)
 		moves = thistlewaite_step(step, copy);
 		if (moves == NULL)
 			return (NULL);
-		ret = append_moves(ret, moves, verbose);
 		i = 0;
 		while (moves[i] != -1)
 		{
@@ -206,12 +273,10 @@ char	*solve(t_cube *cube, bool verbose)
 			++nb_moves;
 			++i;
 		}
+		all_moves = append_moves(all_moves, moves, verbose);
 		free(moves);
 		++step;
 	}
-	if (copy != NULL)
-		free(copy);
-	if (verbose == true) 
-		printf("Number of moves: %d\n", nb_moves);
-	return (ret);
+	free(copy);
+	return (optimize_moves(all_moves));
 }
