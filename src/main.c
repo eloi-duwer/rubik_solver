@@ -6,7 +6,7 @@
 /*   By: eduwer <eduwer@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/09/06 16:46:02 by eduwer            #+#    #+#             */
-/*   Updated: 2020/09/30 20:10:25 by eduwer           ###   ########.fr       */
+/*   Updated: 2020/10/01 18:08:52 by eduwer           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,11 +28,13 @@ const int_fast8_t cube_moves[6][8] = {
 	{P_CDBL, P_CDBR, P_CUBR, P_CUBL, P_EUB, P_EBL, P_EDB, P_EBR}  //BACK
 };
 
-uint_fast8_t get_next_pos(int_fast8_t move, int step) {
+uint_fast8_t get_next_pos(int_fast8_t move, int step)
+{
 	return ((step + (move % 3) + 1) % 4);
 }
 
-t_cube	*duplicate_cube(const t_cube *in) {
+t_cube	*duplicate_cube(const t_cube *in)
+{
 	t_cube	*ret = (t_cube *)malloc(sizeof(t_cube));
 
 	if (ret == NULL)
@@ -50,7 +52,8 @@ t_cube	*scramble_cube(char *str)
 
 	if (strs == NULL)
 		return (NULL);
-	while (strs[i]) {
+	while (strs[i])
+	{
 		rotation = str_to_move(strs[i]);
 		if (rotation == -1)
 			return (NULL);
@@ -71,17 +74,20 @@ t_cube	*scramble_cube(char *str)
  * The new cube is malloced, and the old one is not modified.
  * It is freed is free_old_cube is set to true (do not set it to true if it is not malloced!)
  */
-t_cube *rotation_cube(t_cube *cube, int_fast8_t move, bool free_old_cube) {
+t_cube *rotation_cube(t_cube *cube, int_fast8_t move, bool free_old_cube)
+{
 	t_cube				*ret = duplicate_cube(cube);
 	const int_fast8_t	*cubes = cube_moves[move / 3];
 	uint_fast8_t		next_pos;
 	int					i = 0;
 
-	if (ret == NULL) {
+	if (ret == NULL)
+	{
 		printf("Error during rotation: can't allocate the cube\n");
 		return (NULL);
 	}
-	while (i < 4) {
+	while (i < 4)
+	{
 		/**
 		* (i + (move % 3) + 1) % 4: gets where the next cube will be
 		* in function of the move.
@@ -116,14 +122,17 @@ t_cube *rotation_cube(t_cube *cube, int_fast8_t move, bool free_old_cube) {
 	return (ret);
 }
 
-t_cube *create_base_cube() {
+t_cube *create_base_cube()
+{
 	uint_fast8_t	i = 0;
 	t_cube			*ret = (t_cube *)malloc(sizeof(t_cube));
 
 	if (ret == NULL)
 		return (NULL);
-	while (i < 12) {
-		if (i < 8) {
+	while (i < 12)
+	{
+		if (i < 8)
+		{
 			ret->corner_pos[i] = i;
 			ret->corner_orientation[i] = 0;
 		}
@@ -134,22 +143,52 @@ t_cube *create_base_cube() {
 	return (ret);
 }
 
-int main(int argc, char **argv) {
-	t_cube *cube;
+void	print_help()
+{
+	printf("Usage: ./rubik [OPTIONS]... [SCRAMBLE_MOVES]\n\n");
+	printf("Solves a 3x3x3 Rubik's cube, scrambled with the string given in argument, or a default scramble if no scramble is given\n\n");
+	printf("Options are:\n\n  -v\tVerbose mode\n  -h\tprint this help\n\n");
+	printf("Scramble moves must be a string, each moves must be separated by a space\n");
+	printf("Available moves are: U, U', U2, D, D', D2, L, L', L2, R, R', R2, F, F', F2, B, B', B2\n\n");
+	printf("Example: ./rubik \"U R2 B' L R U2 D' F L R'\"\n\n");
+	exit(0);
+}
 
-	if (argc == 1) {
+int main(int argc, char **argv)
+{
+	t_cube *cube;
+	bool	verbose = false;
+	int		opt;
+
+	while ((opt = getopt(argc, argv, "vh")) != -1)
+	{
+		switch(opt)
+		{
+			case 'h':
+				print_help();
+				break;
+			case 'v':
+				verbose = true;
+				break;
+			default:
+				print_help();
+				break;
+		}
+	}
+	if (optind >= argc)
+	{
 		char *default_scramble = "D2 U' R2 U F2 D2 U' R2 U' B' L2 R' B' D2 U B2 L' D' R2";
 		printf("No scramble is provided, going to solve for default scramble: %s\n", default_scramble);
 		cube = scramble_cube(default_scramble);
 	}
 	else
-		cube = scramble_cube(argv[1]);
+		cube = scramble_cube(argv[optind]);
 	if (cube == NULL) {
 		printf("Error while scrambling the cube\n");
 		return (-1);
 	}
 	
-	char *ret = solve(cube);
+	char *ret = solve(cube, verbose);
 	if (ret != NULL)
 		printf("%s\n", ret);
 	else

@@ -6,7 +6,7 @@
 /*   By: eduwer <eduwer@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/09/06 16:46:51 by eduwer            #+#    #+#             */
-/*   Updated: 2020/10/01 00:54:01 by eduwer           ###   ########.fr       */
+/*   Updated: 2020/10/01 18:07:55 by eduwer           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,6 +20,7 @@
 # include <stdbool.h>
 # include <pieces_positions_movements.h>
 # include <search.h>
+# include <unistd.h>
 
 /*
  * corner pos: see pieces_positions_movements.h
@@ -55,7 +56,7 @@ char			**ft_strsplit(char const *s, char c);
 int_fast8_t		str_to_move(char *str);
 char			*move_to_str(int_fast8_t move);
 int_fast8_t		inverse_move(int_fast8_t move);
-char			*solve(t_cube *cube);
+char			*solve(t_cube *cube, bool verbose);
 t_cube_list		*init_cube_list(int step, t_cube *cube, int_fast8_t *moves, int nb_moves, bool is_forward);
 uint_fast16_t	slice_state(t_cube *cube);
 uint_fast16_t	m_slice_state(t_cube *cube);

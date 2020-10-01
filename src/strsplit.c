@@ -6,11 +6,12 @@
 /*   By: eduwer <eduwer@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/09/13 22:21:13 by eduwer            #+#    #+#             */
-/*   Updated: 2020/09/14 00:30:48 by eduwer           ###   ########.fr       */
+/*   Updated: 2020/10/01 18:09:03 by eduwer           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include <rubik.h>
+
 static size_t	count_words(char *s, char c)
 {
 	size_t nb_words;
