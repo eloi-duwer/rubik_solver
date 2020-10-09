@@ -6,7 +6,7 @@
 /*   By: eduwer <eduwer@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/09/14 00:29:36 by eduwer            #+#    #+#             */
-/*   Updated: 2020/10/01 21:40:55 by eduwer           ###   ########.fr       */
+/*   Updated: 2020/10/09 15:45:22 by eduwer           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -175,7 +175,7 @@ static int_fast8_t	*merge_moves(int_fast8_t *moves, int i, int j)
 
 	while (moves[size_moves] != -1)
 		++size_moves;
-	delta = ((moves[i] % 3) + (moves[j] % 3) + 2) % 4;
+	delta = ((moves[i] % 3) + (moves[j] % 3) + 2) % 4; //Number of quarter turns from a no rotation: 0 = this 2 moves cancels out, 1 = we can replace the two moves by a quarter turn cw...
 	ret = (int_fast8_t *)malloc(sizeof(int_fast8_t) * size_moves - (delta == 0));
 	if (ret == NULL)
 		return (NULL);
